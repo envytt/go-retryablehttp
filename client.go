@@ -765,11 +765,14 @@ func (c *Client) Do(req *Request) (*http.Response, error) {
 			}
 		}
 		timer := time.NewTimer(wait)
+		k := req.Context().Value("explicit_timeout") != nil
 		select {
 		case <-req.Context().Done():
-			timer.Stop()
-			c.HTTPClient.CloseIdleConnections()
-			return nil, req.Context().Err()
+			if !k {
+				timer.Stop()
+				c.HTTPClient.CloseIdleConnections()
+				return nil, req.Context().Err()
+			}
 		case <-timer.C:
 		}
 
